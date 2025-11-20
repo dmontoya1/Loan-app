@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: loanapp_db_dev
+    environment:
+      POSTGRES_DB: ${DB_NAME:-loan_app}
+      POSTGRES_USER: ${DB_USER:-daniel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-daniel}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "${DB_EXTERNAL_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-loan_app}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loanapp_network_dev
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: loanapp_web_dev
+    command: >
+      sh -c "python manage.py collectstatic --noinput --clear &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume_dev:/app/staticfiles
+      - media_volume_dev:/app/media
+    ports:
+      - "${WEB_EXTERNAL_PORT:-8001}:8000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DEBUG=True
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - loanapp_network_dev
+
+volumes:
+  postgres_data_dev:
+  static_volume_dev:
+  media_volume_dev:
+
+networks:
+  loanapp_network_dev:
+    driver: bridge

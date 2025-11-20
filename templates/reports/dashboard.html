@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}Reportes - Sistema de Préstamos{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Reportes y Estadísticas</h1>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="text-sm font-medium text-gray-500">Total Prestado</div>
+                <div class="mt-1 text-2xl font-semibold text-gray-900">{{ stats.total_lent|currency }}</div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="text-sm font-medium text-gray-500">Total Pagado</div>
+                <div class="mt-1 text-2xl font-semibold text-green-600">{{ stats.total_paid|currency }}</div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="text-sm font-medium text-gray-500">Pendiente</div>
+                <div class="mt-1 text-2xl font-semibold text-red-600">{{ stats.total_pending|currency }}</div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="text-sm font-medium text-gray-500">Usuarios Activos</div>
+                <div class="mt-1 text-2xl font-semibold text-gray-900">{{ stats.total_users }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Gráfico de Préstamos por Estado -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Préstamos por Estado</h2>
+            <canvas id="loansByStatusChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Gráfico de Pagos por Mes -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Pagos por Mes (Últimos 6 meses)</h2>
+            <canvas id="paymentsByMonthChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfico de Distribución de Montos -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Distribución de Préstamos por Rango de Monto</h2>
+        <canvas id="loansByAmountChart" width="400" height="100"></canvas>
+    </div>
+
+    <!-- Enlaces a reportes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Reportes de Préstamos</h2>
+            <a href="{% url 'reports:loans' %}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-center">
+                Ver Reporte de Préstamos
+            </a>
+        </div>
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Reportes de Pagos</h2>
+            <a href="{% url 'reports:payments' %}" class="block w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-center">
+                Ver Reporte de Pagos
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Datos para los gráficos (desde el contexto de Django)
+const loansByStatusData = {
+    labels: [{% for item in loans_by_status %}'{{ item.status|default:"N/A" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    data: [{% for item in loans_by_status %}{{ item.count|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}]
+};
+
+const paymentsByMonthData = {
+    labels: [{% for item in payments_by_month %}'{{ item.month|date:"M Y"|default:"N/A" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    data: [{% for item in payments_by_month %}{{ item.total|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}]
+};
+
+// Gráfico de Préstamos por Estado (Torta)
+const ctx1 = document.getElementById('loansByStatusChart').getContext('2d');
+new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+        labels: loansByStatusData.labels,
+        datasets: [{
+            data: loansByStatusData.data,
+            backgroundColor: [
+                'rgba(34, 197, 94, 0.8)',  // Verde para Activo
+                'rgba(59, 130, 246, 0.8)', // Azul para Completado
+                'rgba(239, 68, 68, 0.8)',  // Rojo para Vencido
+                'rgba(156, 163, 175, 0.8)'  // Gris para Cancelado
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Gráfico de Pagos por Mes (Barras)
+const ctx2 = document.getElementById('paymentsByMonthChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: paymentsByMonthData.labels,
+        datasets: [{
+            label: 'Monto Pagado',
+            data: paymentsByMonthData.data,
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            borderColor: 'rgba(34, 197, 94, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de Distribución por Rango de Monto
+const ctx3 = document.getElementById('loansByAmountChart').getContext('2d');
+const amountRanges = ['$0-$1,000', '$1,000-$5,000', '$5,000-$10,000', '$10,000+'];
+const amountCounts = [
+    {{ amount_ranges.range_0_1000|default:0 }},
+    {{ amount_ranges.range_1000_5000|default:0 }},
+    {{ amount_ranges.range_5000_10000|default:0 }},
+    {{ amount_ranges.range_10000_plus|default:0 }}
+];
+
+new Chart(ctx3, {
+    type: 'bar',
+    data: {
+        labels: amountRanges,
+        datasets: [{
+            label: 'Número de Préstamos',
+            data: amountCounts,
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

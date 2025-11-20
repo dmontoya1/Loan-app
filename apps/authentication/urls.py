@@ -1,0 +1,14 @@
+"""
+URLs de autenticación.
+"""
+from django.urls import path
+from . import views
+
+app_name = 'authentication'
+
+urlpatterns = [
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('register/tenant/', views.TenantRegistrationView.as_view(), name='register_tenant'),
+    path('register/user/', views.UserRegistrationView.as_view(), name='register_user'),
+]

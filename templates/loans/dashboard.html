@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}Dashboard - Sistema de Préstamos{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6">
+    <!-- Alertas de Notificaciones -->
+    {% if overdue_payments_count > 0 %}
+    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="h-6 w-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold text-red-800">¡Atención!</h3>
+                    <p class="text-sm text-red-700">Tienes <strong>{{ overdue_payments_count }}</strong> pago(s) vencido(s) que requieren atención inmediata.</p>
+                </div>
+            </div>
+            <a href="{% url 'payments:overdue' %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg">
+                Ver Pagos Vencidos →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if upcoming_payments_count > 0 %}
+    <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg shadow-lg">
+        <div class="flex items-center">
+            <svg class="h-6 w-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+                <h3 class="text-lg font-semibold text-yellow-800">Recordatorio</h3>
+                <p class="text-sm text-yellow-700">Tienes <strong>{{ upcoming_payments_count }}</strong> pago(s) próximo(s) a vencer en los próximos 7 días.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <h1 class="text-4xl font-bold text-[#1F2937] mb-6">Dashboard</h1>
+
+    <!-- Estadísticas Principales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-[#22D3EE] to-[#63B3ED] rounded-xl shadow-lg p-6 text-white hover:shadow-2xl transition-all duration-200 cursor-pointer transform hover:scale-105" onclick="window.location.href='{% url 'loans:list' %}'">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold opacity-90">Total Préstamos</h3>
+                <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold">{{ stats.total_loans }}</p>
+            <p class="text-sm opacity-80 mt-1">Activos: {{ stats.active_loans }}</p>
+            <p class="text-xs opacity-70 mt-1">Completados: {{ stats.completed_loans }}</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white hover:shadow-2xl transition-all duration-200 cursor-pointer transform hover:scale-105" onclick="window.location.href='{% url 'payments:list' %}'">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold opacity-90">Pagos Completados</h3>
+                <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold">{{ stats.completed_payments }}</p>
+            <p class="text-sm opacity-80 mt-1">Monto: {{ stats.total_paid|currency }}</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white hover:shadow-2xl transition-all duration-200 cursor-pointer transform hover:scale-105" onclick="window.location.href='{% url 'payments:overdue' %}'">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold opacity-90">Pagos Vencidos</h3>
+                <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold">{{ overdue_count }}</p>
+            <p class="text-sm opacity-80 mt-1">Requieren atención</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-[#1F2937] to-gray-800 rounded-xl shadow-lg p-6 text-white hover:shadow-2xl transition-all duration-200 cursor-pointer transform hover:scale-105" onclick="window.location.href='{% url 'loans:list' %}'">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold opacity-90">Monto Total Prestado</h3>
+                <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold">{{ stats.total_lent|currency }}</p>
+            <p class="text-sm opacity-80 mt-1">Pendiente: {{ stats.total_pending|currency }}</p>
+        </div>
+    </div>
+
+    <!-- Gráficos Interactivos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Préstamos por Estado (Pie Chart) -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <h2 class="text-xl font-bold text-[#1F2937] mb-4">Préstamos por Estado</h2>
+            <div class="relative h-64">
+                <canvas id="loansByStatusChart"></canvas>
+            </div>
+            <p class="text-xs text-gray-500 mt-4 text-center">Haz clic en una sección para ver detalles</p>
+        </div>
+
+        <!-- Pagos por Mes (Bar Chart) -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <h2 class="text-xl font-bold text-[#1F2937] mb-4">Pagos por Mes</h2>
+            <div class="relative h-64">
+                <canvas id="paymentsByMonthChart"></canvas>
+            </div>
+            <p class="text-xs text-gray-500 mt-4 text-center">Haz clic en una barra para ver detalles</p>
+        </div>
+    </div>
+
+    <!-- Distribución por Rango de Monto -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+        <h2 class="text-xl font-bold text-[#1F2937] mb-4">Distribución por Rango de Monto</h2>
+        <div class="relative h-64">
+            <canvas id="amountRangesChart"></canvas>
+        </div>
+        <p class="text-xs text-gray-500 mt-4 text-center">Haz clic en una barra para filtrar préstamos</p>
+    </div>
+
+    <!-- Tablas de Información -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Préstamos Recientes -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 bg-gradient-to-r from-[#22D3EE] to-[#63B3ED] text-white">
+                <h2 class="text-xl font-bold flex items-center justify-between">
+                    <span>Préstamos Recientes</span>
+                    <a href="{% url 'loans:list' %}" class="text-sm font-normal hover:underline">Ver todos →</a>
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for loan in recent_loans %}
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='{% url 'loans:detail' loan.pk %}'">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ loan.user_profile.full_name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ loan.amount|currency }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if loan.status == 'ACTIVO' %}bg-green-100 text-green-800{% elif loan.status == 'COMPLETADO' %}bg-blue-100 text-blue-800{% elif loan.status == 'VENCIDO' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ loan.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-500">No hay préstamos recientes</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagos Vencidos -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white">
+                <h2 class="text-xl font-bold flex items-center justify-between">
+                    <span>Pagos Vencidos</span>
+                    <a href="{% url 'payments:overdue' %}" class="text-sm font-normal hover:underline">Ver todos →</a>
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimiento</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for payment in overdue_payments %}
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='{% url 'payments:update' payment.pk %}'">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ payment.loan.user_profile.full_name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ payment.amount|currency }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 font-semibold">{{ payment.due_date|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-500">¡Excelente! No hay pagos vencidos</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Colores personalizados
+    const colors = {
+        primary: '#22D3EE',
+        primaryDark: '#63B3ED',
+        dark: '#1F2937',
+        light: '#DBF9FA',
+        success: '#10B981',
+        danger: '#EF4444',
+        warning: '#F59E0B',
+    };
+
+    // Datos para los gráficos
+    const loansByStatusData = {{ loans_by_status|safe }};
+    const paymentsByMonthData = {{ payments_by_month|safe }};
+    const amountRangesData = JSON.parse('{{ amount_ranges|escapejs }}');
+
+    // Gráfico de Préstamos por Estado (Pie Chart Interactivo)
+    const loansCtx = document.getElementById('loansByStatusChart');
+    if (loansCtx) {
+        const statusLabels = loansByStatusData.map(item => item.status || item.label || 'Sin datos');
+        const statusCounts = loansByStatusData.map(item => item.count || 0);
+        const statusColors = {
+            'ACTIVO': colors.success,
+            'COMPLETADO': colors.primary,
+            'VENCIDO': colors.danger,
+            'CANCELADO': '#6B7280',
+        };
+
+        const loansChart = new Chart(loansCtx, {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusCounts,
+                    backgroundColor: statusLabels.map(label => statusColors[label] || colors.primary),
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                onClick: function(event, elements) {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const status = statusLabels[index];
+                        window.location.href = `{% url 'loans:list' %}?status=${status}`;
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Pagos por Mes (Bar Chart Interactivo)
+    const paymentsCtx = document.getElementById('paymentsByMonthChart');
+    if (paymentsCtx) {
+        const monthLabels = paymentsByMonthData.map(item => {
+            if (!item.month) return 'Sin datos';
+            const date = new Date(item.month);
+            return date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+        });
+        const monthTotals = paymentsByMonthData.map(item => parseFloat(item.total || 0));
+
+        const paymentsChart = new Chart(paymentsCtx, {
+            type: 'bar',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Monto Pagado',
+                    data: monthTotals,
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primaryDark,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Monto: $' + context.parsed.y.toLocaleString('es-ES', {minimumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString('es-ES');
+                            }
+                        }
+                    }
+                },
+                onClick: function(event, elements) {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const monthData = paymentsByMonthData[index];
+                        if (monthData && monthData.month) {
+                            const date = new Date(monthData.month);
+                            const startDate = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+                            const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+                            window.location.href = `{% url 'payments:list' %}?start_date=${startDate}&end_date=${endDate}`;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Distribución por Rango de Monto (Bar Chart Interactivo)
+    const rangesCtx = document.getElementById('amountRangesChart');
+    if (rangesCtx) {
+        const rangeLabels = ['$0 - $1,000', '$1,000 - $5,000', '$5,000 - $10,000', '$10,000+'];
+        const rangeCounts = [
+            amountRangesData.range_0_1000 || 0,
+            amountRangesData.range_1000_5000 || 0,
+            amountRangesData.range_5000_10000 || 0,
+            amountRangesData.range_10000_plus || 0,
+        ];
+
+        const rangesChart = new Chart(rangesCtx, {
+            type: 'bar',
+            data: {
+                labels: rangeLabels,
+                datasets: [{
+                    label: 'Cantidad de Préstamos',
+                    data: rangeCounts,
+                    backgroundColor: [colors.primary, colors.primaryDark, colors.success, colors.warning],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Préstamos: ' + context.parsed.y;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                onClick: function(event, elements) {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        let amountMin = 0, amountMax = null;
+                        switch(index) {
+                            case 0: amountMax = 1000; break;
+                            case 1: amountMin = 1000; amountMax = 5000; break;
+                            case 2: amountMin = 5000; amountMax = 10000; break;
+                            case 3: amountMin = 10000; break;
+                        }
+                        let url = `{% url 'loans:list' %}?amount_min=${amountMin}`;
+                        if (amountMax) url += `&amount_max=${amountMax}`;
+                        window.location.href = url;
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

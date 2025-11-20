@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Sistema de Préstamos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        background: linear-gradient(135deg, #DBF9FA 0%, #FFFFFF 50%, #DBF9FA 100%);
+        min-height: 100vh;
+    }
+    .login-card {
+        background: white;
+        box-shadow: 0 20px 60px rgba(34, 211, 238, 0.2);
+        border: 1px solid rgba(34, 211, 238, 0.1);
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, #22D3EE 0%, #63B3ED 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .input-focus:focus {
+        border-color: #22D3EE;
+        box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #22D3EE 0%, #63B3ED 100%);
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(34, 211, 238, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <!-- Logo y Título -->
+        <div class="text-center mb-8">
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-[#22D3EE] to-[#63B3ED] mb-4 shadow-lg">
+                <svg class="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h2 class="text-4xl font-extrabold gradient-text mb-2">
+                Bienvenido
+            </h2>
+            <p class="text-gray-600 text-lg">
+                Inicia sesión en tu cuenta
+            </p>
+        </div>
+
+        <!-- Formulario -->
+        <div class="login-card rounded-2xl p-8">
+            <form class="space-y-6" method="post">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        {{ form.username.label }}
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        {{ form.password.label }}
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <button type="submit" class="btn-primary w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#22D3EE]">
+                        Iniciar Sesión
+                    </button>
+                </div>
+            </form>
+
+            <!-- Separador -->
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">O</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registro -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    ¿No tienes cuenta?
+                    <a href="{% url 'authentication:register_tenant' %}" class="font-semibold text-[#22D3EE] hover:text-[#63B3ED] transition-colors">
+                        Registra tu empresa
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-gray-500">
+                © 2025 Sistema de Préstamos. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

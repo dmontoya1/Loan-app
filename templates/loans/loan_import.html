@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}Importar Préstamo Existente - Sistema de Préstamos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-box {
+        background: linear-gradient(135deg, #DBF9FA 0%, #FFFFFF 100%);
+        border-left: 4px solid #22D3EE;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 max-w-4xl mx-auto">
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-[#1F2937] mb-2">Importar Préstamo Existente</h1>
+                <p class="text-gray-600">Registra un préstamo que ya tiene pagos realizados</p>
+            </div>
+            <a href="{% url 'loans:list' %}" class="text-[#22D3EE] hover:text-[#63B3ED] font-semibold">
+                ← Volver
+            </a>
+        </div>
+        
+        <!-- Información -->
+        <div class="info-box rounded-xl p-6 mb-6 shadow-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-[#22D3EE]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-semibold text-[#1F2937] mb-2">¿Cuándo usar esta opción?</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>Cuando el préstamo ya existe físicamente y tiene cuotas pagadas</li>
+                        <li>Para migrar préstamos de otro sistema</li>
+                        <li>Para registrar préstamos que comenzaron antes de usar esta aplicación</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-xl rounded-xl border border-gray-100 p-8">
+        <form method="post" id="loanImportForm">
+            {% csrf_token %}
+            
+            <!-- Información del Préstamo -->
+            <h2 class="text-xl font-semibold text-[#1F2937] mb-6 pb-3 border-b border-gray-200">
+                Información del Préstamo
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="{{ form.user_profile.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Usuario *
+                    </label>
+                    {{ form.user_profile }}
+                    {% if form.user_profile.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.user_profile.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.amount.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Monto del Préstamo *
+                    </label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.amount.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.interest_rate.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Tasa de Interés (%) *
+                    </label>
+                    {{ form.interest_rate }}
+                    {% if form.interest_rate.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.interest_rate.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.payment_frequency.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Frecuencia de Pago *
+                    </label>
+                    {{ form.payment_frequency }}
+                    {% if form.payment_frequency.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.payment_frequency.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.total_payments.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Total de Cuotas *
+                    </label>
+                    {{ form.total_payments }}
+                    {% if form.total_payments.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.total_payments.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Número total de cuotas del préstamo</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Fecha de Inicio *
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Fecha en que comenzó el préstamo</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                    Notas
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Información de Pagos Realizados -->
+            <h2 class="text-xl font-semibold text-[#1F2937] mb-6 pb-3 border-b border-gray-200 mt-8">
+                Pagos Ya Realizados
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="{{ form.payments_completed.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Cuotas Pagadas
+                    </label>
+                    {{ form.payments_completed }}
+                    {% if form.payments_completed.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.payments_completed.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">¿Cuántas cuotas ya han sido pagadas?</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.last_payment_date.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Fecha del Último Pago
+                    </label>
+                    {{ form.last_payment_date }}
+                    {% if form.last_payment_date.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.last_payment_date.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Fecha en que se realizó el último pago</p>
+                </div>
+            </div>
+
+            <!-- Resumen Calculado -->
+            <div id="payment-summary" class="bg-[#DBF9FA] rounded-xl p-6 mb-6 hidden">
+                <h3 class="text-lg font-semibold text-[#1F2937] mb-3">Resumen del Préstamo</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-600">Monto Total:</span>
+                        <span class="font-semibold text-[#1F2937]" id="total-amount">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Monto por Cuota:</span>
+                        <span class="font-semibold text-[#1F2937]" id="payment-amount">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Cuotas Pagadas:</span>
+                        <span class="font-semibold text-green-600" id="completed-payments">0</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Cuotas Pendientes:</span>
+                        <span class="font-semibold text-red-600" id="pending-payments">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-8">
+                <a href="{% url 'loans:list' %}" class="bg-gray-200 hover:bg-gray-300 text-[#1F2937] px-6 py-3 rounded-xl font-semibold transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="bg-gradient-to-r from-[#22D3EE] to-[#63B3ED] hover:from-[#63B3ED] hover:to-[#22D3EE] text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                    Importar Préstamo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loanImportForm');
+    const amountInput = document.querySelector('[name="amount"]');
+    const interestInput = document.querySelector('[name="interest_rate"]');
+    const totalPaymentsInput = document.querySelector('[name="total_payments"]');
+    const paymentsCompletedInput = document.querySelector('[name="payments_completed"]');
+    const summaryDiv = document.getElementById('payment-summary');
+    
+    function calculateSummary() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const interestRate = parseFloat(interestInput.value) || 0;
+        const totalPayments = parseInt(totalPaymentsInput.value) || 0;
+        const paymentsCompleted = parseInt(paymentsCompletedInput.value) || 0;
+        
+        if (amount > 0 && totalPayments > 0) {
+            const interestAmount = (amount * interestRate) / 100;
+            const totalAmount = amount + interestAmount;
+            const paymentAmount = totalAmount / totalPayments;
+            const pendingPayments = totalPayments - paymentsCompleted;
+            
+            document.getElementById('total-amount').textContent = '$' + totalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('payment-amount').textContent = '$' + paymentAmount.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('completed-payments').textContent = paymentsCompleted;
+            document.getElementById('pending-payments').textContent = pendingPayments;
+            
+            summaryDiv.classList.remove('hidden');
+        } else {
+            summaryDiv.classList.add('hidden');
+        }
+    }
+    
+    [amountInput, interestInput, totalPaymentsInput, paymentsCompletedInput].forEach(input => {
+        input.addEventListener('input', calculateSummary);
+        input.addEventListener('change', calculateSummary);
+    });
+    
+    // Validación en tiempo real
+    paymentsCompletedInput.addEventListener('input', function() {
+        const totalPayments = parseInt(totalPaymentsInput.value) || 0;
+        const paymentsCompleted = parseInt(this.value) || 0;
+        
+        if (totalPayments > 0 && paymentsCompleted > totalPayments) {
+            this.setCustomValidity('No puedes tener más pagos completados que el total de pagos');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Empresa - Sistema de Préstamos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-container {
+        background: linear-gradient(135deg, #DBF9FA 0%, #FFFFFF 50%, #DBF9FA 100%);
+        min-height: 100vh;
+    }
+    .register-card {
+        background: white;
+        box-shadow: 0 20px 60px rgba(34, 211, 238, 0.2);
+        border: 1px solid rgba(34, 211, 238, 0.1);
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, #22D3EE 0%, #63B3ED 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #22D3EE 0%, #63B3ED 100%);
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(34, 211, 238, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Título -->
+        <div class="text-center mb-8">
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-[#22D3EE] to-[#63B3ED] mb-4 shadow-lg">
+                <svg class="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <h2 class="text-4xl font-extrabold gradient-text mb-2">
+                Registrar Nueva Empresa
+            </h2>
+            <p class="text-gray-600">
+                Crea tu cuenta y comienza a gestionar préstamos
+            </p>
+        </div>
+
+        <!-- Formulario -->
+        <div class="register-card rounded-2xl p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                            Nombre de la Empresa *
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                            Email *
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                            Teléfono
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                            Usuario *
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                            Contraseña *
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.confirm_password.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                            Confirmar Contraseña *
+                        </label>
+                        {{ form.confirm_password }}
+                        {% if form.confirm_password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.confirm_password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Dirección
+                    </label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center justify-between pt-4">
+                    <a href="{% url 'authentication:login' %}" class="text-sm font-medium text-[#63B3ED] hover:text-[#22D3EE] transition-colors">
+                        ¿Ya tienes cuenta? Inicia sesión
+                    </a>
+                    <button type="submit" class="btn-primary px-8 py-3 rounded-xl text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#22D3EE]">
+                        Registrar Empresa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

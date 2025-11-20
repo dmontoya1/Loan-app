@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Plantilla - Sistema de Préstamos{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 max-w-4xl mx-auto">
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-[#1F2937] mb-2">
+                    {% if object %}Editar Plantilla{% else %}Nueva Plantilla{% endif %}
+                </h1>
+                <p class="text-gray-600">{% if object %}Modifica la plantilla{% else %}Crea una plantilla reutilizable para agilizar la creación de préstamos{% endif %}</p>
+            </div>
+            <a href="{% url 'loans:templates' %}" class="text-[#22D3EE] hover:text-[#63B3ED] font-semibold">
+                ← Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-xl rounded-xl border border-gray-100 p-8">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Nombre de la Plantilla *
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Ej: "Préstamo Personal 12%", "Préstamo Comercial Mensual"</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.interest_rate.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Tasa de Interés (%) *
+                    </label>
+                    {{ form.interest_rate }}
+                    {% if form.interest_rate.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.interest_rate.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.payment_frequency.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Frecuencia de Pago *
+                    </label>
+                    {{ form.payment_frequency }}
+                    {% if form.payment_frequency.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.payment_frequency.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.amount.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Monto (Opcional)
+                    </label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.amount.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Deja vacío si el monto varía por préstamo</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.total_payments.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Número de Pagos (Opcional)
+                    </label>
+                    {{ form.total_payments }}
+                    {% if form.total_payments.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.total_payments.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Deja vacío si el número de cuotas varía</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="{{ form.notes.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
+                        Notas
+                    </label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Información adicional sobre esta plantilla</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        {{ form.is_active }}
+                        <span class="text-sm font-semibold text-[#1F2937]">Plantilla Activa</span>
+                    </label>
+                    {% if form.is_active.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Solo las plantillas activas aparecerán al crear préstamos</p>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="{% url 'loans:templates' %}" class="bg-gray-200 hover:bg-gray-300 text-[#1F2937] px-6 py-3 rounded-xl font-semibold transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="bg-gradient-to-r from-[#22D3EE] to-[#63B3ED] hover:from-[#63B3ED] hover:to-[#22D3EE] text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 relative">
+                    <span class="submit-text">{% if object %}Actualizar{% else %}Crear{% endif %}</span>
+                    <svg class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white inline submit-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

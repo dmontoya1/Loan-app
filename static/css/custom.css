@@ -1,0 +1,157 @@
+/* Estilos personalizados para formularios y componentes */
+
+/* Estilos para inputs de formularios */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="date"],
+input[type="tel"],
+textarea,
+select {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="tel"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+
+/* Botones principales */
+.btn-primary {
+    @apply bg-gradient-to-r from-[#22D3EE] to-[#63B3ED] hover:from-[#63B3ED] hover:to-[#22D3EE] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-[#1F2937] px-6 py-3 rounded-xl font-semibold transition-colors;
+}
+
+.btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200;
+}
+
+/* Cards mejoradas */
+.card {
+    @apply bg-white shadow-xl rounded-xl border border-gray-100;
+}
+
+.card-header {
+    @apply px-6 py-5 bg-gradient-to-r from-[#22D3EE] to-[#63B3ED] text-white font-bold;
+}
+
+/* Badges/Etiquetas */
+.badge-success {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800;
+}
+
+.badge-warning {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800;
+}
+
+.badge-error {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800;
+}
+
+.badge-info {
+    @apply px-3 py-1 rounded-full text-xs font-semibold bg-[#DBF9FA] text-[#1F2937];
+}
+
+/* Tablas mejoradas */
+.table-wrapper {
+    @apply bg-white shadow-xl rounded-xl border border-gray-100 overflow-hidden;
+}
+
+.table-header {
+    @apply bg-gradient-to-r from-gray-50 to-[#DBF9FA] px-6 py-4 border-b border-gray-200;
+}
+
+/* Links mejorados */
+.link-primary {
+    @apply text-[#22D3EE] hover:text-[#63B3ED] font-semibold transition-colors;
+}
+
+.link-secondary {
+    @apply text-[#1F2937] hover:text-[#374151] font-semibold transition-colors;
+}
+
+/* Animaciones suaves */
+.transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sombras personalizadas */
+.shadow-custom {
+    box-shadow: 0 10px 40px rgba(34, 211, 238, 0.15);
+}
+
+.shadow-custom-hover:hover {
+    box-shadow: 0 20px 60px rgba(34, 211, 238, 0.25);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    /* Botones más grandes en móvil */
+    button, .btn, a.btn {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 12px 16px;
+    }
+    
+    /* Tablas con scroll horizontal */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Formularios optimizados para móvil */
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="date"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: 16px; /* Previene zoom en iOS */
+    }
+    
+    /* Espaciado mejorado en móvil */
+    .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .py-6 {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+
+/* Loading Spinner Animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Tooltip Styles */
+.tooltip {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Smooth Transitions */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}

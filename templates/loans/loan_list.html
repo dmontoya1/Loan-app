@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}Lista de Préstamos - Sistema de Préstamos{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-4xl font-bold text-[#1F2937] mb-2">Préstamos</h1>
+            <p class="text-gray-600">Gestiona todos tus préstamos</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'loans:import' %}" class="bg-[#1F2937] hover:bg-[#374151] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                📥 Importar Préstamo
+            </a>
+            <a href="{% url 'loans:create' %}" class="bg-gradient-to-r from-[#22D3EE] to-[#63B3ED] hover:from-[#63B3ED] hover:to-[#22D3EE] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                + Nuevo Préstamo
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros Avanzados y Exportación -->
+    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 mb-6">
+        <!-- Filtros Básicos -->
+        <div class="mb-4">
+            <button type="button" id="toggleAdvancedFilters" class="text-[#22D3EE] hover:text-[#63B3ED] font-semibold text-sm flex items-center gap-1 mb-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <span id="filterToggleText">Mostrar filtros avanzados</span>
+            </button>
+        </div>
+        
+        <form method="get" id="filterForm">
+            <!-- Filtros Básicos -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Buscar por nombre, documento, email o teléfono..." class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all">
+                <select name="status" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all">
+                    <option value="">Todos los estados</option>
+                    <option value="ACTIVO" {% if request.GET.status == 'ACTIVO' %}selected{% endif %}>Activo</option>
+                    <option value="COMPLETADO" {% if request.GET.status == 'COMPLETADO' %}selected{% endif %}>Completado</option>
+                    <option value="VENCIDO" {% if request.GET.status == 'VENCIDO' %}selected{% endif %}>Vencido</option>
+                    <option value="CANCELADO" {% if request.GET.status == 'CANCELADO' %}selected{% endif %}>Cancelado</option>
+                </select>
+                <select name="payment_frequency" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all">
+                    <option value="">Todas las frecuencias</option>
+                    <option value="SEMANAL" {% if request.GET.payment_frequency == 'SEMANAL' %}selected{% endif %}>Semanal</option>
+                    <option value="QUINCENAL" {% if request.GET.payment_frequency == 'QUINCENAL' %}selected{% endif %}>Quincenal</option>
+                    <option value="MENSUAL" {% if request.GET.payment_frequency == 'MENSUAL' %}selected{% endif %}>Mensual</option>
+                </select>
+            </div>
+            
+            <!-- Filtros Avanzados (Colapsables) -->
+            <div id="advancedFilters" class="hidden border-t border-gray-200 pt-4 mt-4">
+                <h3 class="text-sm font-semibold text-[#1F2937] mb-4">Filtros Avanzados</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Monto Mínimo</label>
+                        <input type="number" name="amount_min" value="{{ request.GET.amount_min }}" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Monto Máximo</label>
+                        <input type="number" name="amount_max" value="{{ request.GET.amount_max }}" step="0.01" min="0" placeholder="999999.99" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Fecha Desde</label>
+                        <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Fecha Hasta</label>
+                        <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all text-sm">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-200">
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-[#1F2937] hover:bg-[#374151] text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                        🔍 Filtrar
+                    </button>
+                    <a href="{% url 'loans:list' %}" class="bg-gray-200 hover:bg-gray-300 text-[#1F2937] px-6 py-3 rounded-xl font-semibold transition-colors">
+                        Limpiar
+                    </a>
+                </div>
+                
+                <!-- Botones de Exportación -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="text-sm text-gray-600 font-medium self-center">Exportar:</span>
+                    <a href="{% url 'loans:export_pdf' %}?{{ request.GET.urlencode }}" 
+                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        PDF
+                    </a>
+                    <a href="{% url 'loans:export_excel' %}?{{ request.GET.urlencode }}" 
+                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Excel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleAdvancedFilters');
+        const filtersDiv = document.getElementById('advancedFilters');
+        const toggleText = document.getElementById('filterToggleText');
+        
+        // Verificar si hay filtros avanzados aplicados
+        const hasAdvancedFilters = '{{ request.GET.amount_min|default:'' }}' || 
+                                    '{{ request.GET.amount_max|default:'' }}' || 
+                                    '{{ request.GET.date_from|default:'' }}' || 
+                                    '{{ request.GET.date_to|default:'' }}';
+        
+        if (hasAdvancedFilters) {
+            filtersDiv.classList.remove('hidden');
+            toggleText.textContent = 'Ocultar filtros avanzados';
+        }
+        
+        toggleBtn.addEventListener('click', function() {
+            filtersDiv.classList.toggle('hidden');
+            toggleText.textContent = filtersDiv.classList.contains('hidden') 
+                ? 'Mostrar filtros avanzados' 
+                : 'Ocultar filtros avanzados';
+        });
+    });
+    </script>
+
+    <!-- Tabla de préstamos -->
+    <div class="bg-white shadow-xl rounded-xl border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interés</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagos</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for loan in loans %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ loan.user_profile.full_name }}</div>
+                        <div class="text-sm text-gray-500">{{ loan.user_profile.document_number }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.amount|currency }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.interest_rate }}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.get_payment_frequency_display }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if loan.status == 'ACTIVO' %}bg-green-100 text-green-800{% elif loan.status == 'COMPLETADO' %}bg-blue-100 text-blue-800{% elif loan.status == 'VENCIDO' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ loan.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ loan.completed_payments_count }}/{{ loan.total_payments }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'loans:detail' loan.pk %}" class="text-[#22D3EE] hover:text-[#63B3ED] font-semibold mr-4 transition-colors">Ver</a>
+                        <a href="{% url 'loans:update' loan.pk %}" class="text-[#1F2937] hover:text-[#374151] font-semibold mr-4 transition-colors">Editar</a>
+                        <a href="{% url 'loans:delete' loan.pk %}" class="text-red-600 hover:text-red-700 font-semibold transition-colors" onclick="return confirm('¿Estás seguro de que deseas eliminar este préstamo? Esta acción no se puede deshacer.');">Eliminar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No hay préstamos registrados</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="mt-6 flex justify-center">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Anterior
+            </a>
+            {% endif %}
+            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Siguiente
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

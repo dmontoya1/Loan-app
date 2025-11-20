@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}Reporte de Préstamos - Sistema de Préstamos{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Reporte de Préstamos</h1>
+
+    <!-- Filtros y Exportación -->
+    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <input type="date" name="start_date" value="{{ start_date }}" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all">
+            <input type="date" name="end_date" value="{{ end_date }}" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#22D3EE] focus:border-[#22D3EE] transition-all">
+            <button type="submit" class="bg-[#1F2937] hover:bg-[#374151] text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                🔍 Filtrar
+            </button>
+        </form>
+        
+        <!-- Botones de Exportación -->
+        <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+            <span class="text-sm text-gray-600 font-medium self-center">Exportar:</span>
+            <a href="{% url 'reports:loans_export_pdf' %}{% if start_date %}?start_date={{ start_date }}{% endif %}{% if end_date %}{% if start_date %}&{% else %}?{% endif %}end_date={{ end_date }}{% endif %}" 
+               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                Exportar PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interés</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for loan in loans %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.user_profile.full_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.amount|currency }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.interest_rate }}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if loan.status == 'ACTIVO' %}bg-green-100 text-green-800{% elif loan.status == 'COMPLETADO' %}bg-blue-100 text-blue-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ loan.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.created_at|date:"d/m/Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay préstamos en este período</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

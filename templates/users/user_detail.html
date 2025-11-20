@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load loan_filters %}
+
+{% block title %}{{ user_profile.full_name }} - Sistema de Préstamos{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{{ user_profile.full_name }}</h1>
+        <div class="space-x-2">
+            <a href="{% url 'users:update' user_profile.pk %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium">
+                Editar
+            </a>
+            <a href="{% url 'users:list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium">
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Información del usuario -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Información Personal</h2>
+            <dl class="grid grid-cols-1 gap-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Nombre Completo</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ user_profile.full_name }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ user_profile.email|default:"-" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ user_profile.phone }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Tipo de Documento</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ user_profile.get_document_type_display }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Número de Documento</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ user_profile.document_number }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Dirección</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ user_profile.address }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Codeudor</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {% if user_profile.codeudor %}
+                            <a href="#" class="text-blue-600 hover:text-blue-900">
+                                {{ user_profile.codeudor.full_name }}
+                            </a>
+                            {% if user_profile.codeudor.relationship %}
+                                <span class="text-gray-500 text-xs">({{ user_profile.codeudor.relationship }})</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-gray-400">Sin codeudor asignado</span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Estadísticas</h2>
+            <dl class="grid grid-cols-1 gap-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Total de Préstamos</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ loans.count }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Préstamos Activos</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-green-600">{{ loans|length }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Información del Codeudor (si existe) -->
+    {% if user_profile.codeudor %}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Información del Codeudor</h2>
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Nombre Completo</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.full_name }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Relación</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.relationship|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Email</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.email|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.phone }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Tipo de Documento</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.get_document_type_display }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Número de Documento</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.document_number }}</dd>
+            </div>
+            <div class="md:col-span-2">
+                <dt class="text-sm font-medium text-gray-500">Dirección</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ user_profile.codeudor.address }}</dd>
+            </div>
+        </dl>
+    </div>
+    {% endif %}
+
+    <!-- Préstamos del usuario -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Préstamos</h2>
+        </div>
+        {% if loans %}
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interés</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for loan in loans %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{{ loan.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.amount|currency }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loan.interest_rate }}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if loan.status == 'ACTIVO' %}bg-green-100 text-green-800{% elif loan.status == 'COMPLETADO' %}bg-blue-100 text-blue-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ loan.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'loans:detail' loan.pk %}" class="text-blue-600 hover:text-blue-900">Ver</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="px-6 py-4 text-center text-sm text-gray-500">No hay préstamos registrados para este usuario</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
