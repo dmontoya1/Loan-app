@@ -2,25 +2,69 @@
  * Sistema de confirmaciones para acciones destructivas.
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Confirmar antes de eliminar
+    // Confirmar antes de eliminar usando SweetAlert2
     const deleteLinks = document.querySelectorAll('a[href*="delete"], button[type="submit"][class*="delete"], form[action*="delete"]');
     deleteLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.')) {
-                e.preventDefault();
-                return false;
-            }
+            e.preventDefault();
+            const element = this;
+            
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: 'rounded-xl',
+                    confirmButton: 'rounded-lg font-semibold',
+                    cancelButton: 'rounded-lg font-semibold'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (element.tagName === 'FORM') {
+                        element.submit();
+                    } else if (element.tagName === 'A') {
+                        window.location.href = element.href;
+                    }
+                }
+            });
         });
     });
     
-    // Confirmar antes de procesar pagos
+    // Confirmar antes de procesar pagos usando SweetAlert2
     const processPaymentForms = document.querySelectorAll('form[action*="create"], form[action*="process"]');
     processPaymentForms.forEach(form => {
+        // Remover el atributo onsubmit original del HTML si existe
+        if (form.hasAttribute('onsubmit')) {
+            form.removeAttribute('onsubmit');
+        }
+        
         form.addEventListener('submit', function(e) {
-            if (!confirm('¿Deseas procesar este pago ahora?')) {
-                e.preventDefault();
-                return false;
-            }
+            e.preventDefault();
+            
+            Swal.fire({
+                title: 'Confirmar Pago',
+                text: '¿Deseas registrar este pago como completado con la fecha de hoy?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10B981',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Sí, registrar pago',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: 'rounded-xl',
+                    confirmButton: 'rounded-lg font-semibold px-4 py-2',
+                    cancelButton: 'rounded-lg font-semibold px-4 py-2'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         });
     });
 });

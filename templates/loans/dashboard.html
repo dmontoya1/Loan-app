@@ -178,7 +178,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for payment in overdue_payments %}
-                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='{% url 'payments:update' payment.pk %}'">
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='{% url 'payments:update' payment.pk|default:0 %}'">
                             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ payment.loan.user_profile.full_name }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ payment.amount|currency }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 font-semibold">{{ payment.due_date|date:"d/m/Y" }}</td>

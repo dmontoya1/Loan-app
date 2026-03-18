@@ -136,7 +136,9 @@ class Loan(models.Model):
 
     @property
     def payment_amount(self):
-        """Calcula el monto de cada pago."""
+        """Calcula el monto del primer pago (ya que pueden ser irregulares en el caso mensual)."""
+        if self.payment_frequency == 'MENSUAL':
+            return self.amount * Decimal('0.80')
         return self.total_amount / self.total_payments
 
     @property

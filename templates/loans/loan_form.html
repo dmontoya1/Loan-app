@@ -3,6 +3,23 @@
 
 {% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Préstamo - Sistema de Préstamos{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+    .ts-control {
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-color: #D1D5DB;
+        min-height: 3rem;
+    }
+    .ts-control.focus {
+        border-color: #22D3EE;
+        box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.5);
+    }
+    .payment-table th { background-color: #F3F4F6; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="px-4 py-6 max-w-4xl mx-auto">
     <div class="mb-6">
@@ -100,6 +117,50 @@
                     {% endif %}
                 </div>
             </div>
+            
+            <!-- Proyección del Préstamo -->
+            <div class="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <h3 class="text-lg font-bold text-[#1F2937] mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-[#22D3EE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Proyección del Plan de Pagos
+                </h3>
+                <div id="payment-projection-summary" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                    <div class="bg-white p-3 rounded shadow-sm border border-gray-100">
+                        <span class="block text-gray-500 text-xs uppercase font-bold">Capital</span>
+                        <span id="proj-capital" class="font-semibold text-lg">€0.00</span>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm border border-gray-100">
+                        <span class="block text-gray-500 text-xs uppercase font-bold">Interés Total</span>
+                        <span id="proj-interest" class="font-semibold text-lg">€0.00</span>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm border border-gray-100">
+                        <span class="block text-gray-500 text-xs uppercase font-bold">Total a Pagar</span>
+                        <span id="proj-total" class="font-semibold text-lg text-[#22D3EE]">€0.00</span>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm border border-gray-100">
+                        <span class="block text-gray-500 text-xs uppercase font-bold">Duración Aprox.</span>
+                        <span id="proj-duration" class="font-semibold text-lg">0 semanas</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+                    <table class="w-full text-sm text-left payment-table">
+                        <thead class="text-xs text-gray-700 uppercase">
+                            <tr>
+                                <th class="px-4 py-3"># Cuota</th>
+                                <th class="px-4 py-3">Fecha Vencimiento</th>
+                                <th class="px-4 py-3 text-right">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-projection-body" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="3" class="px-4 py-8 text-center text-gray-500">
+                                    Ingresa el monto, frecuencia y total de cuotas para ver la proyección.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <div class="mt-6">
                 <label for="{{ form.notes.id_for_label }}" class="block text-sm font-semibold text-[#1F2937] mb-2">
@@ -165,12 +226,194 @@ function loadTemplate(templateId) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // TomSelect para búsqueda de usuarios
+    const userSelect = document.querySelector('[name="user_profile"]');
+    if (userSelect) {
+        new TomSelect(userSelect, {
+            create: false,
+            sortField: { field: "text", direction: "asc" },
+            placeholder: "Buscar por nombre o DNI..."
+        });
+    }
+
     const templateSelect = document.querySelector('[name="template"]');
     if (templateSelect) {
         templateSelect.addEventListener('change', function() {
             loadTemplate(this.value);
+            setTimeout(calculateSchedule, 100);
         });
     }
+
+    // Elementos del formulario para cálculo automático
+    const amountInput = document.querySelector('[name="amount"]');
+    const freqInput = document.querySelector('[name="payment_frequency"]');
+    const totalPaymentsInput = document.querySelector('[name="total_payments"]');
+    const startDateInput = document.querySelector('[name="start_date"]');
+    const interestInput = document.querySelector('[name="interest_rate"]');
+    
+    // Configurar valores por defecto si están vacíos
+    if (freqInput && !freqInput.value) freqInput.value = 'SEMANAL';
+    if (interestInput && !interestInput.value) interestInput.value = '20';
+    if (totalPaymentsInput && !totalPaymentsInput.value) totalPaymentsInput.value = '6';
+    if (startDateInput && !startDateInput.value) startDateInput.value = new Date().toISOString().split('T')[0];
+
+    // Lógica para recalcular el interés solo cuando cambia la frecuencia o los pagos
+    function autoUpdateInterest() {
+        if (!freqInput || !totalPaymentsInput) return;
+        const freq = freqInput.value;
+        const payments = parseInt(totalPaymentsInput.value, 10);
+        if (isNaN(payments) || payments < 1) return;
+
+        let totalWeeks = 0;
+        if (freq === 'SEMANAL') totalWeeks = payments;
+        else if (freq === 'QUINCENAL') totalWeeks = payments * 2;
+        else if (freq === 'MENSUAL') totalWeeks = payments * 4;
+
+        let newInterest = 20 + ((totalWeeks - 6) / 2.0) * 10;
+        if (newInterest < 0) newInterest = 0;
+        
+        if (interestInput) interestInput.value = newInterest.toFixed(2);
+        calculateSchedule();
+    }
+
+    if (freqInput) {
+        freqInput.addEventListener('change', function() {
+            if (this.value === 'SEMANAL') totalPaymentsInput.value = '6';
+            else if (this.value === 'QUINCENAL') totalPaymentsInput.value = '3';
+            else if (this.value === 'MENSUAL') totalPaymentsInput.value = '2';
+            autoUpdateInterest();
+        });
+    }
+    
+    if (totalPaymentsInput) {
+        totalPaymentsInput.addEventListener('change', autoUpdateInterest);
+    }
+
+    // Asignar listeners para calcular proyección al editar monto, fecha o interés manual
+    [amountInput, startDateInput, interestInput].forEach(el => {
+        if(el) {
+            el.addEventListener('input', calculateSchedule);
+            el.addEventListener('change', calculateSchedule);
+        }
+    });
+
+    function calculateSchedule() {
+        if (!amountInput || !amountInput.value || !freqInput || !freqInput.value || !totalPaymentsInput || !totalPaymentsInput.value) {
+            return;
+        }
+
+        const amount = parseFloat(amountInput.value);
+        const freq = freqInput.value;
+        const payments = parseInt(totalPaymentsInput.value, 10);
+        const startDateStr = startDateInput && startDateInput.value ? startDateInput.value : new Date().toISOString().split('T')[0];
+        let interestRate = interestInput && interestInput.value ? parseFloat(interestInput.value) : 20.0;
+        
+        if (isNaN(amount) || isNaN(payments) || payments < 1 || isNaN(interestRate)) return;
+
+        let totalWeeks = 0;
+        let daysIncrement = 0;
+        
+        if (freq === 'SEMANAL') {
+            totalWeeks = payments;
+            daysIncrement = 7;
+        } else if (freq === 'QUINCENAL') {
+            totalWeeks = payments * 2;
+            daysIncrement = 15;
+        } else if (freq === 'MENSUAL') {
+            totalWeeks = payments * 4;
+            daysIncrement = 30;
+        }
+
+        const totalInterest = amount * (interestRate / 100);
+        const totalToPay = amount + totalInterest;
+
+        // Calcular distribución de cuotas
+        let schedule = [];
+        let runningDate = new Date(startDateStr);
+        // Ajustar zona horaria local
+        runningDate = new Date(runningDate.getTime() + runningDate.getTimezoneOffset() * 60000);
+
+        if (freq === 'MENSUAL' && payments === 2) {
+            // Lógica especial mensual: Primera cuota = 80% del capital. Segunda = el resto.
+            const firstPayment = amount * 0.80;
+            const secondPayment = totalToPay - firstPayment;
+            
+            // Cuota 1 (al mes)
+            let date1 = new Date(runningDate);
+            date1.setDate(date1.getDate() + 30);
+            schedule.push({ num: 1, date: date1, amount: firstPayment });
+            
+            // Cuota 2 (al mes y medio o 2 meses dependiendo de la duración real)
+            // Si son 2 pagos, la segunda puede ser a los 45 días o 60 días.
+            // Para proyección mostramos +15 días para la 2da si era a 1.5 meses (no especificado en el form, asumiremos +30 días como base para mensual pero en la lógica dijo "al mes y medio")
+            let date2 = new Date(runningDate);
+            date2.setDate(date2.getDate() + 45); // Asumiendo mes y medio para 2 cuotas en mensual
+            schedule.push({ num: 2, date: date2, amount: secondPayment });
+        } else if (freq === 'MENSUAL') {
+            // Lógica general para MENSUAL con >2 o <2 pagos.
+            // Asumimos primera cuota 80% del capital, resto dividido equitativamente.
+            const firstPayment = amount * 0.80;
+            let date1 = new Date(runningDate);
+            date1.setDate(date1.getDate() + 30);
+            schedule.push({ num: 1, date: date1, amount: firstPayment });
+
+            if (payments > 1) {
+                const remainingToPay = totalToPay - firstPayment;
+                const restPaymentAmount = remainingToPay / (payments - 1);
+                for (let i = 2; i <= payments; i++) {
+                    let nextDate = new Date(runningDate);
+                    nextDate.setDate(nextDate.getDate() + (30 * i));
+                    schedule.push({ num: i, date: nextDate, amount: restPaymentAmount });
+                }
+            }
+        } else {
+            // SEMANAL o QUINCENAL (cuotas iguales)
+            const paymentAmount = totalToPay / payments;
+            for (let i = 1; i <= payments; i++) {
+                let nextDate = new Date(runningDate);
+                nextDate.setDate(nextDate.getDate() + (daysIncrement * i));
+                schedule.push({ num: i, date: nextDate, amount: paymentAmount });
+            }
+        }
+
+        // Renderizar proyección
+        document.getElementById('proj-capital').innerText = '€' + amount.toFixed(2);
+        document.getElementById('proj-interest').innerText = '€' + totalInterest.toFixed(2) + ' (' + interestRate.toFixed(1) + '%)';
+        document.getElementById('proj-total').innerText = '€' + totalToPay.toFixed(2);
+        document.getElementById('proj-duration').innerText = totalWeeks + ' semanas';
+
+        const tbody = document.getElementById('payment-projection-body');
+        tbody.innerHTML = '';
+        
+        schedule.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50';
+            
+            const numTd = document.createElement('td');
+            numTd.className = 'px-4 py-3 font-medium text-gray-900';
+            numTd.innerText = p.num;
+            
+            const dateTd = document.createElement('td');
+            dateTd.className = 'px-4 py-3 text-gray-600';
+            dateTd.innerText = p.date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' });
+            
+            const amountTd = document.createElement('td');
+            amountTd.className = 'px-4 py-3 text-right font-semibold text-[#22D3EE]';
+            amountTd.innerText = '€' + p.amount.toFixed(2);
+            
+            tr.appendChild(numTd);
+            tr.appendChild(dateTd);
+            tr.appendChild(amountTd);
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Ejecutar al inicio por si hay valores precargados
+    calculateSchedule();
 });
 </script>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+{% endblock %}
 {% endblock %}

@@ -193,92 +193,196 @@ class PDFExporter:
     @staticmethod
     def export_payment_receipt_pdf(payment):
         """
-        Genera un comprobante de pago en PDF.
+        Genera un comprobante de pago en PDF estilizado.
         """
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        # Márgenes un poco más amplios para el diseño
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=50, bottomMargin=40)
         elements = []
         styles = getSampleStyleSheet()
         
-        # Estilos personalizados
+        # Colores corporativos (Tailwind Cyan/Blue)
+        primary_color = colors.HexColor('#22D3EE')
+        dark_color = colors.HexColor('#1F2937')
+        gray_color = colors.HexColor('#6B7280')
+        light_gray = colors.HexColor('#F9FAFB')
+        
+        # Estilos
         title_style = ParagraphStyle(
             'ReceiptTitle',
             parent=styles['Heading1'],
-            fontSize=20,
-            textColor=colors.HexColor('#1F2937'),
-            spaceAfter=30,
-            alignment=TA_CENTER
-        )
-        
-        header_style = ParagraphStyle(
-            'ReceiptHeader',
-            parent=styles['Normal'],
-            fontSize=14,
-            textColor=colors.HexColor('#1F2937'),
-            spaceAfter=10,
+            fontSize=24,
+            textColor=dark_color,
+            spaceAfter=5,
+            alignment=TA_RIGHT,
             fontName='Helvetica-Bold'
         )
         
-        # Título
-        title = Paragraph("COMPROBANTE DE PAGO", title_style)
-        elements.append(title)
-        elements.append(Spacer(1, 0.3*inch))
+        subtitle_style = ParagraphStyle(
+            'ReceiptSubtitle',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=gray_color,
+            spaceAfter=20,
+            alignment=TA_RIGHT
+        )
         
-        # Información del pago
-        payment_info = [
-            ['Número de Comprobante:', f"#{payment.id}"],
-            ['Fecha de Emisión:', datetime.now().strftime('%d/%m/%Y %H:%M')],
-            ['', ''],
-            ['INFORMACIÓN DEL PRÉSTAMO', ''],
-            ['Usuario:', payment.loan.user_profile.full_name],
-            ['Documento:', payment.loan.user_profile.document_number],
-            ['Préstamo #:', str(payment.loan.id)],
-            ['', ''],
-            ['INFORMACIÓN DEL PAGO', ''],
-            ['Número de Cuota:', str(payment.payment_number)],
-            ['Monto Pagado:', f"${payment.amount:,.2f}"],
-            ['Fecha de Vencimiento:', payment.due_date.strftime('%d/%m/%Y') if payment.due_date else '-'],
-            ['Fecha de Pago:', payment.payment_date.strftime('%d/%m/%Y') if payment.payment_date else datetime.now().strftime('%d/%m/%Y')],
-            ['Estado:', payment.get_status_display()],
+        company_name_style = ParagraphStyle(
+            'CompanyName',
+            parent=styles['Heading2'],
+            fontSize=18,
+            textColor=primary_color,
+            spaceAfter=5,
+            fontName='Helvetica-Bold'
+        )
+        
+        section_header_style = ParagraphStyle(
+            'SectionHeader',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.white,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Cabecera (Empresa a la izquierda, "RECIBO" a la derecha)
+        header_data = [
+            [
+                Paragraph(f"{payment.loan.tenant.name.upper() if hasattr(payment.loan, 'tenant') and payment.loan.tenant else 'SISTEMA DE PRÉSTAMOS'}", company_name_style),
+                Paragraph("RECIBO DE PAGO", title_style)
+            ],
+            [
+                Paragraph(f"Fecha de Emisión: {datetime.now().strftime('%d/%m/%Y')}", styles['Normal']),
+                Paragraph(f"Comprobante No. {payment.id:06d}", subtitle_style)
+            ]
         ]
         
-        info_table = Table(payment_info, colWidths=[3*inch, 4*inch])
-        info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 3), (0, 3), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 8), (0, 8), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 3), (0, 3), 12),
-            ('FONTSIZE', (0, 8), (0, 8), 12),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
+        header_table = Table(header_data, colWidths=[3.5*inch, 3.5*inch])
+        header_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(header_table)
+        
+        # Línea separadora
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Información del Cliente y Préstamo
+        client_info_data = [
+            [Paragraph("DATOS DEL CLIENTE", section_header_style), Paragraph("DATOS DEL PRÉSTAMO", section_header_style)],
+            [
+                f"Nombre: {payment.loan.user_profile.full_name}\n"
+                f"DNI/Doc: {payment.loan.user_profile.document_number}\n"
+                f"Teléfono: {payment.loan.user_profile.phone if hasattr(payment.loan.user_profile, 'phone') and payment.loan.user_profile.phone else 'N/A'}",
+                f"Préstamo #: {payment.loan.id}\n"
+                f"Fecha Inicio: {payment.loan.start_date.strftime('%d/%m/%Y')}\n"
+                f"Monto Total Préstamo: ${payment.loan.amount:,.2f}"
+            ]
+        ]
+        
+        client_table = Table(client_info_data, colWidths=[3.4*inch, 3.4*inch])
+        client_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (1, 0), dark_color),
+            ('TEXTCOLOR', (0, 0), (1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (0, 1), (1, 1), light_gray),
+            ('BOX', (0, 0), (-1, -1), 1, colors.lightgrey),
+            ('INNERGRID', (0, 0), (-1, -1), 1, colors.lightgrey),
         ]))
         
-        elements.append(info_table)
-        elements.append(Spacer(1, 0.5*inch))
+        elements.append(client_table)
+        elements.append(Spacer(1, 0.4*inch))
         
-        # Nota
+        # Detalle del Pago
+        elements.append(Paragraph("DETALLE DEL PAGO", ParagraphStyle('Detalle', parent=styles['Heading3'], textColor=dark_color, spaceAfter=10)))
+        
+        payment_date_str = payment.payment_date.strftime('%d/%m/%Y') if payment.payment_date else datetime.now().strftime('%d/%m/%Y')
+        due_date_str = payment.due_date.strftime('%d/%m/%Y') if payment.due_date else '-'
+        
+        detail_data = [
+            ['Descripción', 'Fecha Vencimiento', 'Fecha Pago', 'Total'],
+            [f"Pago de Cuota {payment.payment_number} de {payment.loan.total_payments}", due_date_str, payment_date_str, f"${payment.amount:,.2f}"]
+        ]
+        
+        detail_table = Table(detail_data, colWidths=[3.5*inch, 1.2*inch, 1.2*inch, 1*inch])
+        detail_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), primary_color),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (3, 1), (3, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 15),
+            ('LINEBELOW', (0, 0), (-1, 0), 2, dark_color),
+            ('LINEBELOW', (0, -1), (-1, -1), 1, colors.lightgrey),
+        ]))
+        
+        elements.append(detail_table)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Totales
+        totals_data = [
+            ['Subtotal:', f"${payment.amount:,.2f}"],
+            ['Total Pagado:', f"${payment.amount:,.2f}"]
+        ]
+        
+        totals_table = Table(totals_data, colWidths=[5.4*inch, 1.5*inch])
+        totals_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 1), (1, 1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LINEABOVE', (0, 1), (1, 1), 1, dark_color),
+        ]))
+        
+        elements.append(totals_table)
+        elements.append(Spacer(1, 0.8*inch))
+        
+        # Firmas
+        signatures_data = [
+            ['_________________________', '_________________________'],
+            ['Firma del Cliente', 'Firma Autorizada']
+        ]
+        
+        signatures_table = Table(signatures_data, colWidths=[3.5*inch, 3.5*inch])
+        signatures_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('TEXTCOLOR', (0, 0), (-1, -1), gray_color),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        elements.append(signatures_table)
+        
+        # Nota pie de página
+        elements.append(Spacer(1, 0.5*inch))
         note_style = ParagraphStyle(
             'ReceiptNote',
             parent=styles['Normal'],
-            fontSize=9,
-            textColor=colors.grey,
-            alignment=TA_CENTER,
-            spaceBefore=20
+            fontSize=8,
+            textColor=gray_color,
+            alignment=TA_CENTER
         )
-        note = Paragraph("Este documento es un comprobante de pago generado electrónicamente.", note_style)
+        note = Paragraph("Este comprobante certifica que el pago ha sido recibido satisfactoriamente.<br/>Gracias por su puntualidad.", note_style)
         elements.append(note)
         
         doc.build(elements)
         buffer.seek(0)
         
         response = HttpResponse(buffer, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="comprobante_pago_{payment.id}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="comprobante_pago_{payment.id:06d}.pdf"'
         return response
 
 

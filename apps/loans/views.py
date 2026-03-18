@@ -267,10 +267,17 @@ def dashboard_view(request):
         'range_10000_plus': all_loans.filter(amount__gt=Decimal('10000')).count(),
     }
     
+    # Clase personalizada para serializar Decimal a float
+    class DecimalEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            return super(DecimalEncoder, self).default(obj)
+
     # Convertir a JSON para JavaScript
-    loans_by_status_json = json.dumps(loans_by_status)
-    payments_by_month_json = json.dumps(payments_by_month, default=str)
-    amount_ranges_json = json.dumps(amount_ranges)
+    loans_by_status_json = json.dumps(loans_by_status, cls=DecimalEncoder)
+    payments_by_month_json = json.dumps(payments_by_month, cls=DecimalEncoder, default=str)
+    amount_ranges_json = json.dumps(amount_ranges, cls=DecimalEncoder)
 
     context = {
         'stats': stats,
