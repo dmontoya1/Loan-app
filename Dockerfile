@@ -29,8 +29,8 @@ COPY . /app/
 # Crear directorio para archivos estáticos
 RUN mkdir -p /app/staticfiles /app/media
 
-# Exponer puerto
+# Exponer puerto (útil localmente)
 EXPOSE 8000
 
-# Comando por defecto
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "loanapp.wsgi:application"]
+# Comando por defecto usando el puerto inyectado por Render y optimizando para la RAM gratuita (1 worker, 2 threads)
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 1 --threads 2 --timeout 120 loanapp.wsgi:application"]
