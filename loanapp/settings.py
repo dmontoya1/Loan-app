@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-_7)%el&0veq(vlhi&4u9v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,loan-app-x3d3.onrender.com').split(',')
 
 
 # Application definition
@@ -198,7 +198,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:19006",  # Expo default
     "http://127.0.0.1:19006",
+    "http://localhost:8081",   # Expo Metro Bundler Default
+    "http://127.0.0.1:8081",
+    "https://loan-app-x3d3.onrender.com",
 ]
+CORS_ALLOW_ALL_ORIGINS = True # A menudo necesario para que React Native/Expo pueda comunicarse sin bloqueo de red en desarrollo
 
 CORS_ALLOW_CREDENTIALS = True
 
